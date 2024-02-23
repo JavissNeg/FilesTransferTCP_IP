@@ -1,39 +1,43 @@
 import os
 import socket
 
-send = True
-receive = True
+server = True
+client = True
 
-host = '192.168.56.1'
-port = 5000
+host = 'localhost'
+port = 12345
 
-def sender_connection():
+def server_connection():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
-    while send:
+    while server:
         try:
-            s.connect((host, port))
-            s.sendall(b'Hello, world')
+            s.bind((host, port))
+            s.listen(1)
             
-            print('Conected to server')
             
-            s.close()
+            conn, address = s.accept()
+            print('Connected to', address)
+            
+            message = 'Hello, world'
+            conn.send(message.encode())
+            
+            conn.close()
             break
         except:
             print('Connection not found. Try again')
 
-def receive_connection():
+def client_connection():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
-    while receive:
+    while client:
         try:
-            s.bind((host, port))
-            s.listen()
-            client, address = s.accept()
+            s.connect((host, port))
             
-            print('Connected to', address)
+            message = s.recv(1024).decode()
+            print('Received', message)
             
-            client.close()
+            s.close()
             break
         except:
             print('Connection not found. Try again')
@@ -48,9 +52,9 @@ while option != 3:
     option = int(input('Enter an option: '))
 
     if option == 1:
-        sender_connection()
+        server_connection()
     elif option == 2:
-        receive_connection()
+        client_connection()
     elif option == 3:
         print('Exiting...')
     else:
