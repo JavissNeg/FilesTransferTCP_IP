@@ -9,38 +9,27 @@ port = 12345
 
 def server_connection():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind((host, port))
+    s.listen(1)
     
-    while server:
-        try:
-            s.bind((host, port))
-            s.listen(1)
-            
-            
-            conn, address = s.accept()
-            print('Connected to', address)
-            
-            message = 'Hello, world'
-            conn.send(message.encode())
-            
-            conn.close()
-            break
-        except:
-            print('Connection not found. Try again')
+    print('Waiting for connection...')
+
+    conn, address = s.accept()
+    print('Connected to', address)
+    
+    message = 'Hello, world'
+    conn.send(message.encode())
+    
+    conn.close()
 
 def client_connection():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((host, port))
+            
+    message = s.recv(1024).decode()
+    print('Received', message)
     
-    while client:
-        try:
-            s.connect((host, port))
-            
-            message = s.recv(1024).decode()
-            print('Received', message)
-            
-            s.close()
-            break
-        except:
-            print('Connection not found. Try again')
+    s.close()
 
 
 option = 0
