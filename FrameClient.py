@@ -1,7 +1,7 @@
 from customtkinter import CTkFrame, CTkLabel, CTkEntry, CTkButton
 from tkinter import filedialog
 from ipaddress import ip_address
-import socket
+import socket, threading
 
 def createSearchServer(self):
     frameSearchServer = self.frameSearchServer = CTkFrame(self.root)
@@ -52,50 +52,49 @@ def createClient(self, host, directory_path):
     frameClient.labelTitle = CTkLabel(frameClient, text="Receiving file", font=("Arial", 18))
     frameClient.labelTitle.pack(pady=(10, 0), fill='x', padx=10)
     
-    frameClient.labelInstruction = CTkLabel(frameClient, text="Please wait while the file is being received", font=("Arial", 14))
+    frameClient.labelInstruction = CTkLabel(frameClient, text="Please wait for the server's response...", font=("Arial", 14))
     frameClient.labelInstruction.pack(pady=(40, 0), fill='x', padx=10)
     
     frameClient.buttonCancel = CTkButton(frameClient, font=('Arial', 14), text="✖️ Cancel", command=lambda: self.toBack(frameClient, self.frameSearchServer))
     frameClient.buttonCancel.pack(side='bottom', pady=10, ipady=5)
     
-    receiveFile(self, host, directory_path)
-    
-
-def receiveFile(self, host, directory_path):
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((host, self.port))
-        
-        host_name = socket.gethostname()
-        s.send(host_name.encode())
-        
-        code_received = str(s.recv(1024).decode())
-        if code_received == '0':
+    def receiveFile(self, host, directory_path):
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect((host, self.port))
+            
+            host_name = socket.gethostname()
+            s.send(host_name.encode())
+            
+            code_received = str(s.recv(1024).decode())
+            if code_received == '0':
+                s.close()
+            
+            file_name = s.recv(1024).decode()
+            file_size = s.recv(1024).decode()
+            
+            self.frameClient.labelInstruction.configure(text=f"Receiving file {file_name} of {file_size} KB")
+            
+            file = open(f"{directory_path}/{file_name}", 'wb')
+            while True:
+                data = s.recv(1024)
+                if not data:
+                    break
+                file.write(data)
+            
+            file.close()
             s.close()
-        
-        file_name = s.recv(1024).decode()
-        file_size = s.recv(1024).decode()
-        
-        self.frameClient.labelInstruction.configure(text=f"Receiving file {file_name} of {file_size} KB")
-        
-        file = open(f"{directory_path}/{file_name}", 'wb')
-        while True:
-            data = s.recv(1024)
-            if not data:
-                break
-            file.write(data)
-        
-        file.close()
-        s.close()
-        
-        self.frameClient.labelTitle.configure(text="File received")
-        self.frameClient.labelInstruction.configure(text="File received succesfuly")
-        self.frameClient.buttonCancel.configure(text="Go to menu", command=lambda: self.toMenu())
-    except socket.error:
-        self.frameClient.labelTitle.configure(text="Error")
-        self.frameClient.labelInstruction.configure(text="An error ocurred while receiving the file. Please try again.")
-        self.frameClient.buttonCancel.configure(text="Try again", command=lambda: self.toBack(self.frameClient, self.frameSearchServer))
+            
+            self.frameClient.labelTitle.configure(text="File received")
+            self.frameClient.labelInstruction.configure(text="File received succesfuly")
+            self.frameClient.buttonCancel.configure(text="Go to menu", command=lambda: self.toMenu())
+        except socket.error as e:
+            self.frameClient.labelTitle.configure(text="Error")
+            self.frameClient.labelInstruction.configure(text="The server rejected the transfer or an error occurred. Try again later")
+            self.frameClient.buttonCancel.configure(text="Try again", command=lambda: self.toBack(self.frameClient, self.frameSearchServer))
+            
     
+    threading.Thread(target=receiveFile, args=(self, host, directory_path)).start()
     
         
     

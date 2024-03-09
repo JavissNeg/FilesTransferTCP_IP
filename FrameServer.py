@@ -43,26 +43,23 @@ def createServer(self, file_path: str):
     labelInfo = CTkLabel(frameServer, text="Waiting connections...", font=("Arial", 14))
     labelInfo.pack(pady=(25, 10), fill='x')
     
+    searchConnections_stop = False
     def cancel():
         nonlocal searchConnections_stop 
         searchConnections_stop = True
         self.toBack(frameServer, self.frameLoadFile)
 
-    
     buttonCancel = CTkButton(frameServer, font=('Arial', 14), text="✖️ Cancel", command=lambda: cancel())
     buttonCancel.pack(side="bottom", pady=15, padx=10, ipady=5)
     
-    # Start the server
-    searchConnections_stop = False
     host = socket.gethostbyname(socket.gethostname())
     labelTitle.configure(text=f"{socket.gethostname()} your IP is: {host}")
     
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.settimeout(1) 
     
     def searchConnections(s):
         try:
-            # Function to start the server
+            # Function to start the server        
+            s.settimeout(1) 
             s.bind((host, self.port))
             s.listen()
 
@@ -101,6 +98,7 @@ def createServer(self, file_path: str):
                     buttonCancel.configure(state='normal')
                     labelInfo.configure(text="The file was send succesfully")
                     buttonCancel.configure(text="Go to menu", command=lambda: self.toMenu())
+                    break
                 else:
                     conn.send("0".encode())
                     conn.close()
@@ -108,7 +106,8 @@ def createServer(self, file_path: str):
             s.close()          
         except Exception as e:
             messagebox.showerror("An error occurred", f"An error occurred: {e}")
-    
-    searchConnections_thread = threading.Thread(target=searchConnections, args=(s,))
-    searchConnections_thread.start()
-    
+          
+    # Start the server
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    threading.Thread(target=searchConnections, args=(s,)).start()
+       

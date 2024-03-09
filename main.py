@@ -15,7 +15,6 @@ class menu:
     
     def toMenu(self):
         for widget in self.root.winfo_children():
-            print(widget)
             if isinstance(widget, CTkFrame) and widget != self.frameMenu:
                 widget.destroy()
                      
